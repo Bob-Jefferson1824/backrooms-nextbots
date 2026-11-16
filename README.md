@@ -6,7 +6,7 @@ Browser-based multiplayer Backrooms game. The server uses Express and Socket.IO 
 - Multiplayer players in one shared room.
 - Nearby-area minimap discovery for every player. The map does not display the Grusiver player.
 - Gru Hunt keeps the regular monsters active and gives them the Grusiver appearance.
-- The hidden Grusiver role is activated by pressing `\` and entering `iloveArson`, then pressing Enter. Only one player can hold the role at a time.
+- The hidden Grusiver role is activated by pressing `\` and entering `iloveArson`, then pressing Enter. Only one player can hold the role at a time. The client waits briefly for the server to acknowledge the role, so an older multiplayer update cannot immediately cancel the activation.
 - The four-digit escape-door code is regenerated after each successful escape.
 
 ## Run locally

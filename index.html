@@ -72,7 +72,7 @@ kp3.position.set(cen(DC[0])-DI[0]*(CS/2+.03),1.3,cen(DC[1])-DI[1]*(CS/2+.03));kp
 const noteT=mk(64,80,(x,w,h)=>{x.fillStyle='#fff7c8';x.fillRect(0,0,w,h);x.fillStyle='#665';for(let i=0;i<6;i++)x.fillRect(8,14+i*10,w-16-(i%3)*10,2);x.fillStyle='#c00';x.font='bold 16px sans-serif';x.fillText('?',w-20,h-8)},1,1);
 const notes=NT.map(([x,z])=>{const s=new THREE.Sprite(new THREE.SpriteMaterial({map:noteT}));s.scale.set(.5,.62,1);s.position.set(cen(x),1,cen(z));S.add(s);return s}),got=[0,0,0,0];
 // state
-let MON=null,iMon=false,gruKeyAuth=false,ncC=0,ncOut=0,cdOpen=false,pings=[];const ncSeen={},caSeen={},ex=new Uint8Array(N*N);let rag=0,rk=0,ch=1.6,stam=100,exh=false,stD=0,psC=0,psOut=0,pushCd=0,EV=null,lastTot=-1,pipeBuf=null,OT=[];const psSeen={},sbf=document.getElementById('sbf');
+let MON=null,iMon=false,gruKeyAuth=false,gruPendingAt=0,ncC=0,ncOut=0,cdOpen=false,pings=[];const ncSeen={},caSeen={},ex=new Uint8Array(N*N);let rag=0,rk=0,ch=1.6,stam=100,exh=false,stD=0,psC=0,psOut=0,pushCd=0,EV=null,lastTot=-1,pipeBuf=null,OT=[];const psSeen={},sbf=document.getElementById('sbf');
 const free0=[];for(let z=0;z<N;z++)for(let x=0;x<N;x++)if(!g[z][x])free0.push([x,z]);
 const sp0=[cen(1),cen(1)];let px=sp0[0],py=0,pz=sp0[1],vx=0,vz=0,vy=0,yaw=-Math.PI/2*0+Math.PI,pitch=0,ground=true,tp=false,caught=0,inv=0,t0=performance.now(),best=0,go=false;
 const K={};addEventListener('keydown',e=>{if(e.target.tagName==='INPUT')return;K[e.code]=1;if(e.code==='KeyV')tp=!tp;if(e.code==='Space')e.preventDefault();if(e.code==='KeyE')interact();if(e.code==='KeyF')push();if(e.code==='Backslash'||e.code==='IntlBackslash'||e.key==='\\')openCd();if(e.code==='Escape'&&kpOpen)closeKp();if(kpOpen&&/^(Digit|Numpad)\d$/.test(e.code))press(+e.code.slice(-1));if(kpOpen&&e.code==='Backspace')clr()});addEventListener('keyup',e=>K[e.code]=0);addEventListener('mousedown',e=>{if(go&&e.button===0)push()});
@@ -131,9 +131,14 @@ socket.on('room:state',data=>{
  host=!!(data&&data.hostId===socket.id);
  const self=peers.find(p=>p.isMe);
  if(iMon&&self&&(!self.presence||!self.presence.mon)){
-  iMon=false;gruKeyAuth=false;
-  say(self.presence&&self.presence.n==='Grusiver'?'The Grusiver role is already taken.':'Only the username Grusiver can use that role.',4);
- }
+  // A room update from another player can arrive before our next 70ms
+  // player:update. Do not treat that stale snapshot as a rejected role claim.
+  if(!gruPendingAt)gruPendingAt=Date.now();
+  if(Date.now()-gruPendingAt>1500){
+   iMon=false;gruKeyAuth=false;gruPendingAt=0;
+   say('The Gru role is already taken. Try again when the current Gru Hunt ends.',4);
+  }
+ }else if(iMon&&self&&self.presence&&self.presence.mon){gruPendingAt=0}
  net.textContent='Socket.IO multiplayer connected: '+list.length+' player(s) in this room.';
 });
 socket.on('disconnect',()=>{room=null;net.textContent='Multiplayer disconnected. Reconnecting…'});
@@ -251,10 +256,10 @@ function noteFx(x,z){if(iMon){pings.push({x,z,t:performance.now()});say('A note 
  if(host&&!MON)for(const b of bots)if(Math.hypot(b.x-x,b.z-z)<40){b.mem={x,z,f:field(x,z),t:5};b.wan=null}}
 function onMon(was){setGruLook(!!MON);if(MON){if(MON==='me')say('YOU ARE GRU! Hunt every survivor. Press \\ and enter the code again to stop.',7);else{inv=Math.max(inv,3);const q=peers.find(p=>p.peer===MON);say('GRU HUNT! '+((q&&cleanName(q.presence.n))||'A player')+' became Gru. Run, and hide in the vents!',7)}}
  else if(was){iMon=false;gruKeyAuth=false;inv=Math.max(inv,3);say('The Gru hunt is over.',4)}}
-function becomeGru(){iMon=true;gruKeyAuth=true;rag=0;if(cellv(px,pz)===3)for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=Math.floor(px/CS)+a,Z=Math.floor(pz/CS)+b;if(g[Z]&&g[Z][X]===0){px=cen(X);pz=cen(Z);break}}}
+function becomeGru(){iMon=true;gruKeyAuth=true;gruPendingAt=Date.now();rag=0;if(cellv(px,pz)===3)for(const[a,b]of[[1,0],[-1,0],[0,1],[0,-1]]){const X=Math.floor(px/CS)+a,Z=Math.floor(pz/CS)+b;if(g[Z]&&g[Z][X]===0){px=cen(X);pz=cen(Z);break}}}
 function openCd(){if(cdOpen||kpOpen)return;cdOpen=true;cdp.style.display='block';ov.style.display='none';cdi.value='';cdm.textContent='';document.exitPointerLock();setTimeout(()=>cdi.focus(),30)}
 function closeCd(){cdOpen=false;cdp.style.display='none';ov.style.display='flex';cv.requestPointerLock&&cv.requestPointerLock()}
-function submitCd(v){const c=String(v).toLowerCase().replace(/[^a-z]/g,'');if(c==='ilovearson'){if(iMon){iMon=false;gruKeyAuth=false}else if(MON){cdm.textContent='Someone is already Gru.';return}else becomeGru();closeCd()}else{cdm.textContent='Wrong code.';cdi.value=''}}
+function submitCd(v){const c=String(v).toLowerCase().replace(/[^a-z]/g,'');if(c==='ilovearson'){if(iMon){iMon=false;gruKeyAuth=false;gruPendingAt=0}else if(MON){cdm.textContent='Someone is already Gru.';return}else becomeGru();closeCd()}else{cdm.textContent='Wrong code.';cdi.value=''}}
 cdi.onkeydown=e=>{e.stopPropagation();if(e.key==='Enter')submitCd(cdi.value);else if(e.key==='Escape')closeCd()};
 requestAnimationFrame(loop);
 </script></body></html>
