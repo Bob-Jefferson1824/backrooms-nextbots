@@ -1,16 +1,22 @@
 # Backrooms: Nextbots
 
-Updated Socket.IO multiplayer build. Deploy the repository to Render as a Node Web Service.
+Browser-based multiplayer Backrooms game. The server uses Express and Socket.IO and is designed for Render.
 
-- Build command: `npm install`
-- Start command: `npm start`
-- Runtime: Node
-- Free instance
+## Current features
+- Multiplayer players in one shared room.
+- Nearby-area minimap discovery for every player. The map does not display the Grusiver player.
+- Gru Hunt keeps the regular monsters active and gives them the Grusiver appearance.
+- The hidden Grusiver role is activated by pressing `\` and entering `iloveArson`, then pressing Enter. Only one player can hold the role at a time.
+- The four-digit escape-door code is regenerated after each successful escape.
 
-## Changes in this update
-- Normal players see only their own minimap dot. No explored-map reveal.
-- In Gru Hunt, the normal monster count remains active and all monsters use the Grusiver appearance.
-- The player-controlled Grusiver remains a separate role. Only a player whose in-game name is exactly `Grusiver` can claim it; the server permits only one active Grusiver at a time.
-- Normal players do not see the Grusiver player marker on the minimap.
+## Run locally
+1. Install Node.js 18 or newer.
+2. Run `npm install`.
+3. Run `npm start`.
+4. Open `http://localhost:3000`.
 
-The role check is intentionally username-based, as requested. Anyone can type that name, so it is not secure account authentication.
+## Render
+The included `render.yaml` configures the Node web service. Render uses `npm install` to build and `npm start` to launch.
+
+## Note
+The hidden phrase is part of the browser game and is not a secure authentication system. Anyone who inspects the game's downloaded JavaScript may discover it.
