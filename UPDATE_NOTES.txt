@@ -1,0 +1,19 @@
+Backrooms: Nextbots - gameplay/security update
+
+Changes in this build:
+- Gru players are immune to Nextbot collision deaths.
+- Gru mode reveals the entire map on the map display.
+- Gru mode uses five active AI Gru hunters; other unused bot slots are hidden.
+- AI Gru hunters use a larger detection radius, longer pursuit memory, and faster chase speed.
+- Escape code is generated server-side with cryptographic randomness. Notes request their digit from the server, and keypad attempts are checked by the server with a five-attempts-per-minute limit.
+- Multiplayer server rejects impossible horizontal teleports and excessive vertical/flying positions, and broadcasts corrected positions back to the player's client.
+
+Deployment:
+- Upload the contents of this folder to the existing GitHub repository (replace the existing files), commit, and let Render deploy.
+- Build command: npm install
+- Start command: npm start
+- Health check path: /health
+
+Notes:
+- This is still a browser-authoritative game in several areas. The movement checks make common fly/teleport cheats much harder but are not a complete anti-cheat system.
+- The server currently trusts a client note-claim event for revealing a note digit; keypad guesses themselves are rate-limited and verified server-side.
